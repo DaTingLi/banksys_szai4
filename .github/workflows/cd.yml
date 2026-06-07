@@ -39,24 +39,33 @@ jobs:
             # Fixed port for deployment
             PORT=8004
 
-            # Stop and remove old container FIRST (before port check)
-            echo ">> Stopping old container..."
+            # Stop ALL containers using ports 8004-8010
+            echo ">> Cleaning up old containers..."
+            for container in $(docker ps -q --filter "publish=8000-8010"); do
+              echo ">> Stopping container $container"
+              docker rm -f "$container" 2>/dev/null || true
+            done
+
+            # Also stop any container named banksys (might be stopped but not removed)
             docker rm -f banksys 2>/dev/null || true
 
-            # Wait for port to be released
+            # Wait for ports to be released
             echo ">> Waiting for port $PORT to be released..."
-            for i in $(seq 1 10); do
+            for i in $(seq 1 15); do
               if ! ss -ltnH 2>/dev/null | grep -q ":$PORT " && ! docker ps --format "{{.Ports}}" 2>/dev/null | grep -q ":$PORT->"; then
                 echo ">> Port $PORT is free"
                 break
               fi
-              echo ">> Port $PORT still busy, waiting... ($i/10)"
+              echo ">> Port $PORT still busy, waiting... ($i/15)"
               sleep 1
             done
 
             # Final check - if port still busy, abort
             if ss -ltnH 2>/dev/null | grep -q ":$PORT " || docker ps --format "{{.Ports}}" 2>/dev/null | grep -q ":$PORT->"; then
               echo "ERROR: Port $PORT is still in use after cleanup, aborting"
+              echo ">> Please manually check what is using port $PORT"
+              ss -ltnH | grep ":$PORT " || echo "No process found using port $PORT via ss"
+              docker ps --format "table {{.Names}}\t{{.Ports}}" | grep "$PORT" || echo "No container found using port $PORT"
               exit 1
             fi
 
