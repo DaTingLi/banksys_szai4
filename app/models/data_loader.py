@@ -65,30 +65,6 @@ def load_train_data(data_dir: Path | None = None) -> pd.DataFrame:
 
     train_path = data_dir / "train.csv"
     return _load_csv(train_path, expected_columns=TRAIN_COLUMNS)
-    """Load training data from CSV file.
-
-    Args:
-        data_dir: Path to data directory. Defaults to ./data relative to project root.
-
-    Returns:
-        DataFrame with training data.
-
-    Raises:
-        FileNotFoundError: If train.csv file does not exist.
-        ValueError: If file is empty or has invalid format.
-
-    Examples:
-        >>> df = load_train_data()
-        >>> len(df) > 0
-        True
-        >>> "subscribe" in df.columns
-        True
-    """
-    if data_dir is None:
-        data_dir = Path(__file__).parent.parent.parent / "data"
-
-    train_path = data_dir / "train.csv"
-    return _load_csv(train_path)
 
 
 def load_test_data(data_dir: Path | None = None) -> pd.DataFrame:

@@ -16,26 +16,14 @@ st.set_page_config(
 
 
 def main() -> None:
-    """Main application entry point."""
+    """Render the home / landing page.
+
+    Navigation between pages is handled by Streamlit's native multipage
+    mechanism (files under ``app/pages/``), so this entry point only shows
+    the landing content and a dataset snapshot.
+    """
     st.title("🏦 Bank Marketing Analysis & Prediction")
 
-    st.sidebar.markdown("## Navigation")
-
-    page = st.sidebar.radio(
-        "Select Page",
-        ["Home", "Data Analysis", "Prediction"],
-    )
-
-    if page == "Home":
-        show_home()
-    elif page == "Data Analysis":
-        show_data_analysis()
-    elif page == "Prediction":
-        show_prediction()
-
-
-def show_home() -> None:
-    """Display home page."""
     st.markdown(
         """
         ## Welcome
@@ -45,30 +33,18 @@ def show_home() -> None:
         - **Data Analysis**: Explore customer demographics and marketing effectiveness
         - **Prediction**: Predict customer subscription likelihood
 
-        Select a page from the sidebar to begin.
+        Use the sidebar to navigate between pages.
         """
     )
 
-    # Display data info
-    data_dir = Path("data")
-    if (data_dir / "train.csv").exists():
+    data_path = Path("data") / "train.csv"
+    if data_path.exists():
         import pandas as pd
 
-        df = pd.read_csv(data_dir / "train.csv")
-        st.metric("Total Records", len(df))
-        st.metric("Columns", len(df.columns))
-
-
-def show_data_analysis() -> None:
-    """Display data analysis page."""
-    st.header("📊 Data Analysis")
-    st.info("Data analysis module will be implemented in US-3")
-
-
-def show_prediction() -> None:
-    """Display prediction page."""
-    st.header("🔮 Prediction")
-    st.info("Prediction module will be implemented in US-6")
+        df = pd.read_csv(data_path)
+        col1, col2 = st.columns(2)
+        col1.metric("Total Records", f"{len(df):,}")
+        col2.metric("Columns", len(df.columns))
 
 
 if __name__ == "__main__":
