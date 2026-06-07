@@ -8,46 +8,22 @@
 
 ## 当前状态 (最后更新: 2025-06-07 · by AI)
 
-- **阶段**: `初始化规划（等待确认）`
-- **上一步完成**: 填写 `00-project-context.md` 和 `01-requirements.md`，确定项目技术栈与需求
-- **下一步 (TODO 第一条)**: 建仓 + 配 Secrets（第 ① 步）
-- **阻塞项**: 无（等待用户确认后开始执行）
+- **阶段**: `US-1 已完成，准备开始 US-2`
+- **上一步完成**: US-1 初始化项目工程化与 CI/CD，完整跑通六步流程，CD 部署成功
+- **下一步 (TODO 第一条)**: US-2 数据加载与预处理模块
+- **阻塞项**: 无
 
 ---
 
 ## 待办清单 (TODO,按优先级)
 
-### 第一批：初始化项目工程化与 CI/CD（US-1）
-- [ ] ① 建仓 + 配 Secrets
-  - [ ] 使用 `gh` 创建 GitHub 仓库（banksys_szai4）
-  - [ ] 初始化本地 git，提交占位结构到 main
-  - [ ] **✋ 确认门**：提示配置 GitHub Secrets（SSH_PRIVATE_KEY、SSH_HOST、SSH_USER）
-- [ ] ② 开 feature 分支
-  - [ ] 从 main 切出 `feature/1-init-ci-cd`
-  - [ ] **✋ 确认门**：报出分支名
-- [ ] ③ 本地模块化开发（逐模块汇报）
-  - [ ] 模块 A：创建目录结构（app/、tests/ 等）
-  - [ ] 模块 B：配置 pyproject.toml（ruff）
-  - [ ] 模块 C：配置 requirements.txt / requirements-dev.txt
-  - [ ] 模块 D：配置 Dockerfile
-  - [ ] 模块 E：配置 CI workflow（.github/workflows/ci.yml）
-  - [ ] 模块 F：配置 CD workflow（.github/workflows/cd.yml）
-  - [ ] 模块 G：编写基础测试（占位 test_health）
-  - [ ] 模块 H：编写基础 Streamlit 应用（占位页面 + 健康检查）
-  - [ ] **✋ 确认门**：每个模块完成后汇报
-- [ ] ④ 本地 CI 自检
-  - [ ] 执行 `ruff format --check .`
-  - [ ] 执行 `ruff check .`
-  - [ ] 执行 `pytest`
-  - [ ] **✋ 确认门**：汇报自检结果，全绿才继续
-- [ ] ⑤ 触发 PR
-  - [ ] `git push` 分支
-  - [ ] `gh pr create` 发起 PR
-  - [ ] **✋ 确认门**：报出 PR 链接与 CI 状态
-- [ ] ⑥ 人工审核 → 合并（人类） → CD 自动部署
-  - [ ] **✋ AI 在此硬停**：等待人工 Review 和合并
-  - [ ] 合并后 CD 自动触发
-  - [ ] **✋ 确认门**：汇报部署结果（端口、健康检查）
+### 第一批：初始化项目工程化与 CI/CD（US-1）✅ 已完成
+- [x] ① 建仓 + 配 Secrets
+- [x] ② 开 feature 分支
+- [x] ③ 本地模块化开发（8 个模块）
+- [x] ④ 本地 CI 自检
+- [x] ⑤ 触发 PR（PR #1）
+- [x] ⑥ 人工审核 → 合并 → CD 自动部署（端口 8005）
 
 ### 第二批：数据加载与预处理模块（US-2）
 - [ ] 实现 app/models/data_loader.py
@@ -95,14 +71,27 @@
 
 ## 已知坑 (GOTCHAS)
 
-- 暂无（开始开发后记录）
+- **坑-001**: Dockerfile ARG 作用域问题
+  - 现象: CI 构建时 `PIP_INDEX_URL` 为空字符串，pip 安装失败
+  - 根因: ARG 在 FROM 之前定义，作用域在 FROM 后结束
+  - 解决: 在 FROM 后重新声明 ARG，使用 `--index-url` 替代 `-i`
+  - 验证: CI Docker 构建步骤通过
+
+- **坑-002**: CD 部署 git 目录检查
+  - 现象: 首次部署时 `/opt/banksys` 存在但不是 git 仓库，`git clone || git pull` 失败
+  - 根因: 目录存在非空时 `git clone` 失败；非 git 目录时 `git pull` 失败
+  - 解决: 先检查是否为 git 目录（`[ -d .git ]`），是则 pull，否则删除后重新克隆
+  - 验证: CD 部署成功，端口 8005，健康检查 ok
 
 ---
 
 ## 里程碑 (DONE)
 
-- [x] 2025-06-07：填写 `00-project-context.md`，确定项目技术栈（Python 3.11 + Streamlit + pytest + ruff + Docker）、目录地图、质量门槛
-- [x] 2025-06-07：填写 `01-requirements.md`，定义 8 个用户故事（US-1 ~ US-8），覆盖完整开发流程
-- [x] 2025-06-07：初始化 `PROGRESS.md`，列出第一批 TODO
+- [x] 2025-06-07：填写项目规范文档（00/01/PROGRESS）
+- [x] 2025-06-07：创建 GitHub 仓库（banksys_szai4）
+- [x] 2025-06-07：US-1 完成 - 初始化项目工程化与 CI/CD
+  - 完整跑通六步交付流程
+  - CI/CD 流水线配置完成
+  - CD 成功部署到服务器（端口 8005）
 
 > 反臃肿:里程碑超过 15 条时,把更早内容合并成一行摘要,保持本文件可快速阅读。
