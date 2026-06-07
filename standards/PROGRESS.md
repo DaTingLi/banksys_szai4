@@ -10,8 +10,8 @@
 
 - **阶段**: `US-3 已完成（本地），在 feature/3-analysis-and-prediction 分支连续开发中`
 - **开发策略**: 按用户要求 US-3~US-6 全部本地开发并测试完成后，再统一进 CI/CD（一条大分支一个 PR）
-- **上一步完成**: US-3 数据分析交互页面（visualizer 逻辑 + 页面 + 测试，核心逻辑 100% 覆盖）
-- **下一步 (TODO 第一条)**: US-4 模型训练脚本（RandomForest）
+- **上一步完成**: US-4 模型训练脚本（RandomForest，AUC 0.8964），模型产出至 app/ml/model/model.pkl
+- **下一步 (TODO 第一条)**: US-5 预测服务核心逻辑（predictor.py）
 - **阻塞项**: 无（端口已固定 8004，见坑-005）
 
 ---
@@ -42,11 +42,12 @@
 - [x] 顺手清理 data_loader.py 死代码、对齐 .gitignore 模型路径
 - [ ] 提 PR（按策略推迟到 US-6 完成后统一进 CI/CD）
 
-### 第四批：模型训练脚本（US-4）
-- [ ] 实现 app/ml/train.py（离线训练脚本）
-- [ ] 配置 ml/model/ 加入 .gitignore
-- [ ] 本地运行训练，验证模型产出
-- [ ] 提 PR
+### 第四批：模型训练脚本（US-4）✅ 已完成（本地）
+- [x] 实现 app/ml/train.py（ColumnTransformer+OneHot+RandomForest Pipeline，固定种子）
+- [x] app/ml/model/ 已在 .gitignore（git check-ignore 验证通过）
+- [x] 本地真跑训练：AUC 0.8964 / 准确率 0.8742，产出 model.pkl
+- [x] 编写 test_train.py（10 个测试），CLI 支持 --overwrite/--check-auc
+- [ ] 提 PR（推迟到统一进 CI/CD）
 
 ### 第五批：预测服务核心逻辑（US-5）
 - [ ] 实现 app/models/predictor.py

@@ -36,6 +36,38 @@ FEATURE_COLUMNS = [
 # Full columns including target variable (for train data)
 TRAIN_COLUMNS = FEATURE_COLUMNS + ["subscribe"]
 
+# Target column and the value meaning "subscribed".
+TARGET_COLUMN = "subscribe"
+TARGET_POSITIVE = "yes"
+
+# Feature schema used for model training and prediction (excludes id/target).
+# Single source of truth shared by ml.train and models.predictor.
+CATEGORICAL_FEATURES = [
+    "job",
+    "marital",
+    "education",
+    "default",
+    "housing",
+    "loan",
+    "contact",
+    "month",
+    "day_of_week",
+    "poutcome",
+]
+NUMERIC_FEATURES = [
+    "age",
+    "duration",
+    "campaign",
+    "pdays",
+    "previous",
+    "emp_var_rate",
+    "cons_price_index",
+    "cons_conf_index",
+    "lending_rate3m",
+    "nr_employed",
+]
+MODEL_FEATURES = CATEGORICAL_FEATURES + NUMERIC_FEATURES
+
 # Missing value markers in the dataset
 MISSING_VALUE_MARKERS = ["unknown", "nonexistent", ""]
 
