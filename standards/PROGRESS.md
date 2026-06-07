@@ -10,8 +10,8 @@
 
 - **阶段**: `US-3 已完成（本地），在 feature/3-analysis-and-prediction 分支连续开发中`
 - **开发策略**: 按用户要求 US-3~US-6 全部本地开发并测试完成后，再统一进 CI/CD（一条大分支一个 PR）
-- **上一步完成**: US-4 模型训练脚本（RandomForest，AUC 0.8964），模型产出至 app/ml/model/model.pkl
-- **下一步 (TODO 第一条)**: US-5 预测服务核心逻辑（predictor.py）
+- **上一步完成**: US-5 预测服务核心逻辑（predictor.py，100% 覆盖），端到端预测验证通过
+- **下一步 (TODO 第一条)**: US-6 在线预测页面（02_prediction.py 表单）
 - **阻塞项**: 无（端口已固定 8004，见坑-005）
 
 ---
@@ -49,10 +49,11 @@
 - [x] 编写 test_train.py（10 个测试），CLI 支持 --overwrite/--check-auc
 - [ ] 提 PR（推迟到统一进 CI/CD）
 
-### 第五批：预测服务核心逻辑（US-5）
-- [ ] 实现 app/models/predictor.py
-- [ ] 编写 test_predictor.py
-- [ ] 提 PR
+### 第五批：预测服务核心逻辑（US-5）✅ 已完成（本地）
+- [x] 实现 app/models/predictor.py（load_model 带 lru_cache，predict 返回 subscribe/probability/confidence）
+- [x] 编写 test_predictor.py（16 个测试，100% 覆盖）：正常/模型缺失/缺失特征/非法数值/未知类别/响应时间
+- [x] 真实模型端到端验证：高意愿 0.90/high，低意愿 0.35；预热后单次 <1s
+- [ ] 提 PR（推迟到统一进 CI/CD）
 
 ### 第六批：在线预测页面（US-6）
 - [ ] 实现 app/pages/02_prediction.py（点选式表单）
