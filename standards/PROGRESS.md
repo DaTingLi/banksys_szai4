@@ -6,12 +6,14 @@
 
 ---
 
-## 当前状态 (最后更新: 2025-06-07 · by AI)
+## 当前状态 (最后更新: 2026-06-07 · by AI)
 
-- **阶段**: `US-2 已完成，准备开始 US-3`
-- **上一步完成**: US-2 数据加载与预处理模块，CD 部署成功（端口 8006）
-- **下一步 (TODO 第一条)**: US-3 数据分析交互页面
-- **阻塞项**: 端口回退问题需修复（当前端口不确定，应固定 8004）
+- **阶段**: `PR #4 已发起，CI 全绿，等待人工审核 + 合并（AI 在此硬停）`
+- **开发策略**: 按用户要求 US-3~US-6 全部本地开发并测试完成后，再统一进 CI/CD（一条大分支一个 PR）
+- **上一步完成**: PR #4 创建，CI 全绿（ruff/pytest/docker build 均通过）
+- **下一步**: 由人工 Review PR #4 → 合并 main → 触发 CD 自动部署（端口 8004）→ 验证 /_stcore/health
+- **PR**: https://github.com/DaTingLi/banksys_szai4/pull/4
+- **阻塞项**: 无（端口已固定 8004，见坑-005）
 
 ---
 
@@ -33,31 +35,39 @@
 - [x] 修复 CD git ownership 问题
 - [x] CD 部署成功（端口 8006）
 
-### 第三批：数据分析交互页面（US-3）
-- [ ] 实现 app/pages/01_data_analysis.py
-- [ ] 实现数据可视化逻辑（app/models/visualizer.py）
-- [ ] 编写测试 + 提 PR
+### 第三批：数据分析交互页面（US-3）✅ 已完成（本地）
+- [x] 实现数据可视化逻辑（app/models/visualizer.py，10 函数，100% 覆盖）
+- [x] 实现 app/pages/01_data_analysis.py（概览/饼图/类别分析/年龄分析/数值分布，交互式）
+- [x] 精简 main.py 为首页，改用 Streamlit 原生多页导航
+- [x] 编写 test_visualizer.py（24 个测试）+ 真实数据冒烟验证
+- [x] 顺手清理 data_loader.py 死代码、对齐 .gitignore 模型路径
+- [ ] 提 PR（按策略推迟到 US-6 完成后统一进 CI/CD）
 
-### 第四批：模型训练脚本（US-4）
-- [ ] 实现 app/ml/train.py（离线训练脚本）
-- [ ] 配置 ml/model/ 加入 .gitignore
-- [ ] 本地运行训练，验证模型产出
-- [ ] 提 PR
+### 第四批：模型训练脚本（US-4）✅ 已完成（本地）
+- [x] 实现 app/ml/train.py（ColumnTransformer+OneHot+RandomForest Pipeline，固定种子）
+- [x] app/ml/model/ 已在 .gitignore（git check-ignore 验证通过）
+- [x] 本地真跑训练：AUC 0.8964 / 准确率 0.8742，产出 model.pkl
+- [x] 编写 test_train.py（10 个测试），CLI 支持 --overwrite/--check-auc
+- [ ] 提 PR（推迟到统一进 CI/CD）
 
-### 第五批：预测服务核心逻辑（US-5）
-- [ ] 实现 app/models/predictor.py
-- [ ] 编写 test_predictor.py
-- [ ] 提 PR
+### 第五批：预测服务核心逻辑（US-5）✅ 已完成（本地）
+- [x] 实现 app/models/predictor.py（load_model 带 lru_cache，predict 返回 subscribe/probability/confidence）
+- [x] 编写 test_predictor.py（16 个测试，100% 覆盖）：正常/模型缺失/缺失特征/非法数值/未知类别/响应时间
+- [x] 真实模型端到端验证：高意愿 0.90/high，低意愿 0.35；预热后单次 <1s
+- [ ] 提 PR（推迟到统一进 CI/CD）
 
-### 第六批：在线预测页面（US-6）
-- [ ] 实现 app/pages/02_prediction.py（点选式表单）
-- [ ] 集成 predictor 模块
-- [ ] 提 PR
+### 第六批：在线预测页面（US-6）✅ 已完成（本地）
+- [x] 实现 app/pages/02_prediction.py（点选式表单，类别选项从数据动态取值）
+- [x] 集成 predictor 模块（结果含标签/概率进度条/置信度/建议文案，含模型缺失友好提示）
+- [x] 本地启动 Streamlit 验证：/_stcore/health=200、data_analysis/prediction 页面均 200
+- [ ] 提 PR（推迟到统一进 CI/CD）
 
 ### 第七批：测试覆盖与质量门禁完善（US-7 & US-8）
-- [ ] 补充测试覆盖率到 ≥80%
-- [ ] 验证 CI/CD 完整流程
-- [ ] 最终验收
+- [x] 核心逻辑覆盖率：data_loader/visualizer/predictor 均 100%（UI 页面按规范不计）
+- [x] 注册 pytest unit marker，消除测试告警
+- [x] 修复 Dockerfile：构建时训练模型 + 装 curl + 健康检查端点 /_stcore/health（坑-006）
+- [x] 推分支 + 发 PR（#4），CI 复检全绿（含 docker build）
+- [ ] 人工审核 → 合并 → CD 部署 → 验证端口 8004 健康检查
 
 ---
 
@@ -97,6 +107,12 @@
   - 根因: Docker 容器操作后目录所有权变化，git 检测到可疑所有权
   - 解决: CD 脚本开头添加 `git config --global --add safe.directory /opt/banksys`
   - 验证: CD 部署成功
+
+- **坑-006**: 模型产物不进镜像导致生产预测失效（已修复）
+  - 现象: model.pkl 被 .gitignore 排除，CD 克隆代码后镜像内无模型，预测页报"模型未找到"
+  - 根因: 模型是离线产物不进 Git，但 Dockerfile 未在构建时训练
+  - 解决: Dockerfile 在 COPY app/ 与 data/ 后增加 `RUN python -m app.ml.train --overwrite`，把模型烤进镜像；同时 slim 镜像补装 curl、HEALTHCHECK 端点改为 /_stcore/health
+  - 验证: 待 CI docker build 与 CD 部署确认
 
 - **坑-005**: 端口回退问题（已修复）
   - 现象: 每次部署端口不同（8004→8005→8006），端口递增

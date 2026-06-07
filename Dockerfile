@@ -11,6 +11,11 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
+# curl is needed for the container HEALTHCHECK (slim image ships without curl)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy requirements and install production dependencies only
 COPY requirements.txt .
 RUN pip install --no-cache-dir --timeout 120 --index-url "${PIP_INDEX_URL}" -r requirements.txt
@@ -19,12 +24,16 @@ RUN pip install --no-cache-dir --timeout 120 --index-url "${PIP_INDEX_URL}" -r r
 COPY app/ ./app/
 COPY data/ ./data/
 
+# Train the model at build time so the prediction service has an artifact.
+# model.pkl is gitignored (never committed); it is baked into the image here.
+RUN python -m app.ml.train --overwrite
+
 # Expose Streamlit default port (will be mapped to 8004 on host)
 EXPOSE 8501
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -fSs http://localhost:8501/health || exit 1
+# Health check (Streamlit exposes /_stcore/health)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -fSs http://localhost:8501/_stcore/health || exit 1
 
 # Run Streamlit
 CMD ["streamlit", "run", "app/main.py", "--server.port=8501", "--server.address=0.0.0.0"]

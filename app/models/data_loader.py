@@ -36,6 +36,38 @@ FEATURE_COLUMNS = [
 # Full columns including target variable (for train data)
 TRAIN_COLUMNS = FEATURE_COLUMNS + ["subscribe"]
 
+# Target column and the value meaning "subscribed".
+TARGET_COLUMN = "subscribe"
+TARGET_POSITIVE = "yes"
+
+# Feature schema used for model training and prediction (excludes id/target).
+# Single source of truth shared by ml.train and models.predictor.
+CATEGORICAL_FEATURES = [
+    "job",
+    "marital",
+    "education",
+    "default",
+    "housing",
+    "loan",
+    "contact",
+    "month",
+    "day_of_week",
+    "poutcome",
+]
+NUMERIC_FEATURES = [
+    "age",
+    "duration",
+    "campaign",
+    "pdays",
+    "previous",
+    "emp_var_rate",
+    "cons_price_index",
+    "cons_conf_index",
+    "lending_rate3m",
+    "nr_employed",
+]
+MODEL_FEATURES = CATEGORICAL_FEATURES + NUMERIC_FEATURES
+
 # Missing value markers in the dataset
 MISSING_VALUE_MARKERS = ["unknown", "nonexistent", ""]
 
@@ -65,30 +97,6 @@ def load_train_data(data_dir: Path | None = None) -> pd.DataFrame:
 
     train_path = data_dir / "train.csv"
     return _load_csv(train_path, expected_columns=TRAIN_COLUMNS)
-    """Load training data from CSV file.
-
-    Args:
-        data_dir: Path to data directory. Defaults to ./data relative to project root.
-
-    Returns:
-        DataFrame with training data.
-
-    Raises:
-        FileNotFoundError: If train.csv file does not exist.
-        ValueError: If file is empty or has invalid format.
-
-    Examples:
-        >>> df = load_train_data()
-        >>> len(df) > 0
-        True
-        >>> "subscribe" in df.columns
-        True
-    """
-    if data_dir is None:
-        data_dir = Path(__file__).parent.parent.parent / "data"
-
-    train_path = data_dir / "train.csv"
-    return _load_csv(train_path)
 
 
 def load_test_data(data_dir: Path | None = None) -> pd.DataFrame:
