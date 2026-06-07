@@ -176,6 +176,7 @@ pip install -r requirements.txt -r requirements-dev.txt -i https://pypi.tuna.tsi
 | rsync 成功但 docker build 失败 | 依赖下载、镜像源、Dockerfile |
 | 服务器本机 curl 通,外网打不开 | 安全组/防火墙是否放行端口(含回退端口段) |
 | CD 日志二次报错 | 部署脚本是否缺 `set -e` |
+| CD `Run Command Timeout`,docker build 卡在 `apt-get` | 国内服务器访问 deb.debian.org 极慢;**避免在 Dockerfile 里 apt 装包**,能用基础镜像已有运行时(如 python)替代就别 apt;非装不可则换国内 apt 源 |
 
 ---
 
