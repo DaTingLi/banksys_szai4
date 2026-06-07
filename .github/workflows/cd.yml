@@ -20,6 +20,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
+            # Fix git ownership issue
+            git config --global --add safe.directory /opt/banksys
+
             mkdir -p /opt/banksys
             cd /opt/banksys
 
