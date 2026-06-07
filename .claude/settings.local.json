@@ -3,7 +3,8 @@
     "allow": [
       "Bash(ruff format:*)",
       "Bash(ruff check:*)",
-      "Bash(pytest --cov=app --cov-report=term-missing)"
+      "Bash(pytest --cov=app --cov-report=term-missing)",
+      "Bash(gh run:*)"
     ]
   }
 }

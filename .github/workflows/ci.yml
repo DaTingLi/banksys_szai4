@@ -23,6 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements-dev.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+          pip install ruff==0.6.4
 
       - name: Format check (ruff)
         run: ruff format --check .
