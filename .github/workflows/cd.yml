@@ -20,10 +20,18 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
-            cd /opt/banksys || exit 0
+            mkdir -p /opt/banksys
+            cd /opt/banksys
 
-            # Pull latest code
-            git clone https://github.com/DaTingLi/banksys_szai4 . || git pull
+            # Check if directory is a git repository
+            if [ -d .git ]; then
+              echo ">> Existing git repository, pulling latest code"
+              git pull
+            else
+              echo ">> Not a git repository, cloning fresh"
+              rm -rf * .* 2>/dev/null || true
+              git clone https://github.com/DaTingLi/banksys_szai4.git .
+            fi
 
             # Port auto-fallback (8004-8010)
             port_in_use() {
