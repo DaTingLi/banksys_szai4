@@ -36,25 +36,34 @@ jobs:
               git clone https://github.com/DaTingLi/banksys_szai4.git .
             fi
 
-            # Port auto-fallback (8004-8010)
-            port_in_use() {
-              ss -ltnH 2>/dev/null | grep -q ":$1 " && return 0
-              docker ps --format "{{.Ports}}" 2>/dev/null | grep -q ":$1->" && return 0
-              return 1
-            }
+            # Fixed port for deployment
+            PORT=8004
 
-            PORT=""
-            for p in $(seq 8004 8010); do
-              if ! port_in_use "$p"; then PORT="$p"; break; fi
+            # Stop and remove old container FIRST (before port check)
+            echo ">> Stopping old container..."
+            docker rm -f banksys 2>/dev/null || true
+
+            # Wait for port to be released
+            echo ">> Waiting for port $PORT to be released..."
+            for i in $(seq 1 10); do
+              if ! ss -ltnH 2>/dev/null | grep -q ":$PORT " && ! docker ps --format "{{.Ports}}" 2>/dev/null | grep -q ":$PORT->"; then
+                echo ">> Port $PORT is free"
+                break
+              fi
+              echo ">> Port $PORT still busy, waiting... ($i/10)"
+              sleep 1
             done
-            [ -z "$PORT" ] && { echo "预留端口区间已全部占用,部署中止"; exit 1; }
-            echo ">> 部署到主机端口 $PORT"
+
+            # Final check - if port still busy, abort
+            if ss -ltnH 2>/dev/null | grep -q ":$PORT " || docker ps --format "{{.Ports}}" 2>/dev/null | grep -q ":$PORT->"; then
+              echo "ERROR: Port $PORT is still in use after cleanup, aborting"
+              exit 1
+            fi
+
+            echo ">> Deploying to fixed port $PORT"
 
             # Build image
             docker build --build-arg PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple -t banksys:latest .
-
-            # Stop and remove old container (idempotent)
-            docker rm -f banksys 2>/dev/null || true
 
             # Run new container
             docker run -d --name banksys --restart unless-stopped -p ${PORT}:8501 banksys:latest
