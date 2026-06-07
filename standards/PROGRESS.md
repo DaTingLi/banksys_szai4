@@ -8,10 +8,10 @@
 
 ## 当前状态 (最后更新: 2026-06-07 · by AI)
 
-- **阶段**: `US-3 已完成（本地），在 feature/3-analysis-and-prediction 分支连续开发中`
+- **阶段**: `US-3~US-6 + US-8 已完成（本地全绿），准备推分支发 PR 进 CI/CD`
 - **开发策略**: 按用户要求 US-3~US-6 全部本地开发并测试完成后，再统一进 CI/CD（一条大分支一个 PR）
-- **上一步完成**: US-6 在线预测页面（02_prediction.py），本地启动应用健康检查 200、两页面均 200 可达
-- **下一步 (TODO 第一条)**: US-8 全量覆盖率核对 → 统一进 CI/CD（推分支发 PR）
+- **上一步完成**: US-8 质量门禁核对 + 修复 Dockerfile 模型烘焙（坑-006）；本地 75 测试全绿、ruff 全过
+- **下一步 (TODO 第一条)**: git push feature/3-analysis-and-prediction → gh pr create（之后停下等你审核合并）
 - **阻塞项**: 无（端口已固定 8004，见坑-005）
 
 ---
@@ -62,9 +62,11 @@
 - [ ] 提 PR（推迟到统一进 CI/CD）
 
 ### 第七批：测试覆盖与质量门禁完善（US-7 & US-8）
-- [ ] 补充测试覆盖率到 ≥80%
-- [ ] 验证 CI/CD 完整流程
-- [ ] 最终验收
+- [x] 核心逻辑覆盖率：data_loader/visualizer/predictor 均 100%（UI 页面按规范不计）
+- [x] 注册 pytest unit marker，消除测试告警
+- [x] 修复 Dockerfile：构建时训练模型 + 装 curl + 健康检查端点 /_stcore/health（坑-006）
+- [ ] 推分支 + 发 PR，CI 复检（含 docker build）
+- [ ] 人工审核 → 合并 → CD 部署 → 验证端口 8004 健康检查
 
 ---
 
@@ -104,6 +106,12 @@
   - 根因: Docker 容器操作后目录所有权变化，git 检测到可疑所有权
   - 解决: CD 脚本开头添加 `git config --global --add safe.directory /opt/banksys`
   - 验证: CD 部署成功
+
+- **坑-006**: 模型产物不进镜像导致生产预测失效（已修复）
+  - 现象: model.pkl 被 .gitignore 排除，CD 克隆代码后镜像内无模型，预测页报"模型未找到"
+  - 根因: 模型是离线产物不进 Git，但 Dockerfile 未在构建时训练
+  - 解决: Dockerfile 在 COPY app/ 与 data/ 后增加 `RUN python -m app.ml.train --overwrite`，把模型烤进镜像；同时 slim 镜像补装 curl、HEALTHCHECK 端点改为 /_stcore/health
+  - 验证: 待 CI docker build 与 CD 部署确认
 
 - **坑-005**: 端口回退问题（已修复）
   - 现象: 每次部署端口不同（8004→8005→8006），端口递增
