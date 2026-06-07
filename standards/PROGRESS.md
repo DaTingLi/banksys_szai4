@@ -8,11 +8,11 @@
 
 ## 当前状态 (最后更新: 2026-06-07 · by AI)
 
-- **阶段**: `PR #4 已发起，CI 全绿，等待人工审核 + 合并（AI 在此硬停）`
+- **阶段**: `PR #4 已合并；首次 CD 因 apt 超时失败（坑-007），已修 Dockerfile，准备发修复 PR`
 - **开发策略**: 按用户要求 US-3~US-6 全部本地开发并测试完成后，再统一进 CI/CD（一条大分支一个 PR）
-- **上一步完成**: PR #4 创建，CI 全绿（ruff/pytest/docker build 均通过）
-- **下一步**: 由人工 Review PR #4 → 合并 main → 触发 CD 自动部署（端口 8004）→ 验证 /_stcore/health
-- **PR**: https://github.com/DaTingLi/banksys_szai4/pull/4
+- **上一步完成**: 定位 CD 失败根因（apt-get 装 curl 在国内服务器超时），改为 Python 健康检查移除 apt
+- **下一步**: fix/cd-apt-timeout 分支 → 发 PR → 你合并 → CD 重跑 → 验证端口 8004 健康检查
+- **PR**: #4 已合并；修复 PR 待建
 - **阻塞项**: 无（端口已固定 8004，见坑-005）
 
 ---
@@ -107,6 +107,13 @@
   - 根因: Docker 容器操作后目录所有权变化，git 检测到可疑所有权
   - 解决: CD 脚本开头添加 `git config --global --add safe.directory /opt/banksys`
   - 验证: CD 部署成功
+
+- **坑-007**: Docker 内 apt-get 装 curl 在国内服务器超时导致 CD 失败（已修复）
+  - 现象: CD "Deploy to server" 跑 10 分钟后 `Run Command Timeout`；日志 `Fetched 9975 kB in 8min 6s (20.5 kB/s)`
+  - 根因: 为容器 HEALTHCHECK 装 curl 加了 `apt-get update/install`，服务器访问 deb.debian.org 极慢（20.5 kB/s），超过 appleboy/ssh-action 默认 10 分钟命令超时。CI 在国外 runner 上 apt 快所以没暴露
+  - 解决: Dockerfile 彻底移除 apt-get/curl，容器 HEALTHCHECK 改用镜像自带 Python（urllib）访问 /_stcore/health，完全绕开 apt
+  - 教训: 国内服务器构建镜像要避免走 Debian 官方源；能用镜像已有运行时（python）就别额外 apt 装包
+  - 验证: 待新 PR 合并后 CD 确认
 
 - **坑-006**: 模型产物不进镜像导致生产预测失效（已修复）
   - 现象: model.pkl 被 .gitignore 排除，CD 克隆代码后镜像内无模型，预测页报"模型未找到"
