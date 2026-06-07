@@ -1,0 +1,56 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /opt/banksys || exit 0
+
+            # Pull latest code
+            git clone https://github.com/DaTingLi/banksys_szai4 . || git pull
+
+            # Port auto-fallback (8004-8010)
+            port_in_use() {
+              ss -ltnH 2>/dev/null | grep -q ":$1 " && return 0
+              docker ps --format "{{.Ports}}" 2>/dev/null | grep -q ":$1->" && return 0
+              return 1
+            }
+
+            PORT=""
+            for p in $(seq 8004 8010); do
+              if ! port_in_use "$p"; then PORT="$p"; break; fi
+            done
+            [ -z "$PORT" ] && { echo "预留端口区间已全部占用,部署中止"; exit 1; }
+            echo ">> 部署到主机端口 $PORT"
+
+            # Build image
+            docker build --build-arg PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple -t banksys:latest .
+
+            # Stop and remove old container (idempotent)
+            docker rm -f banksys 2>/dev/null || true
+
+            # Run new container
+            docker run -d --name banksys --restart unless-stopped -p ${PORT}:8501 banksys:latest
+
+            # Wait for startup
+            sleep 5
+
+            # Health check
+            curl -fsS "http://localhost:${PORT}/_stcore/health"
+            echo ">> 部署成功: http://${{ secrets.SSH_HOST }}:${PORT}/"

@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main, feature/**]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements-dev.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+      - name: Format check (ruff)
+        run: ruff format --check .
+
+      - name: Lint check (ruff)
+        run: ruff check .
+
+      - name: Run tests
+        run: pytest --cov=app --cov-report=term-missing --cov-report=xml
+
+      - name: Build Docker image
+        run: docker build --build-arg PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple -t banksys:test .
