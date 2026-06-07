@@ -108,6 +108,14 @@
   - 解决: CD 脚本开头添加 `git config --global --add safe.directory /opt/banksys`
   - 验证: CD 部署成功
 
+- **坑-008**: Streamlit 多页应用容器内 `ModuleNotFoundError: No module named 'app'`（已修复）
+  - 现象: 部署后页面报 `from app.models import visualizer` → No module named 'app'（/app/app/pages/01_data_analysis.py）
+  - 根因: 容器 `CMD streamlit run app/main.py` 只把主脚本目录 /app/app 加进 sys.path，而 `import app.*` 需要父目录 /app 在路径上；本地用 `python -m streamlit` 会把 cwd 加进路径所以没暴露
+  - 隐蔽点: 本地只验了 HTTP 200，但 Streamlit 页面脚本在 websocket 连接时才执行，200 不代表页面渲染成功
+  - 解决: Dockerfile 增加 `ENV PYTHONPATH=/app`；本地复现验证：无 PYTHONPATH 报同样错，设置后三模块导入 OK
+  - 教训: 验证 Streamlit 多页应用要真正打开每个页面触发脚本执行，不能只看健康检查/HTTP 200
+  - 验证: 待 PR #5 合并后 CD 确认
+
 - **坑-007**: Docker 内 apt-get 装 curl 在国内服务器超时导致 CD 失败（已修复）
   - 现象: CD "Deploy to server" 跑 10 分钟后 `Run Command Timeout`；日志 `Fetched 9975 kB in 8min 6s (20.5 kB/s)`
   - 根因: 为容器 HEALTHCHECK 装 curl 加了 `apt-get update/install`，服务器访问 deb.debian.org 极慢（20.5 kB/s），超过 appleboy/ssh-action 默认 10 分钟命令超时。CI 在国外 runner 上 apt 快所以没暴露
