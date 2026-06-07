@@ -8,10 +8,11 @@
 
 ## 当前状态 (最后更新: 2026-06-07 · by AI)
 
-- **阶段**: `US-3~US-6 + US-8 已完成（本地全绿），准备推分支发 PR 进 CI/CD`
+- **阶段**: `PR #4 已发起，CI 全绿，等待人工审核 + 合并（AI 在此硬停）`
 - **开发策略**: 按用户要求 US-3~US-6 全部本地开发并测试完成后，再统一进 CI/CD（一条大分支一个 PR）
-- **上一步完成**: US-8 质量门禁核对 + 修复 Dockerfile 模型烘焙（坑-006）；本地 75 测试全绿、ruff 全过
-- **下一步 (TODO 第一条)**: git push feature/3-analysis-and-prediction → gh pr create（之后停下等你审核合并）
+- **上一步完成**: PR #4 创建，CI 全绿（ruff/pytest/docker build 均通过）
+- **下一步**: 由人工 Review PR #4 → 合并 main → 触发 CD 自动部署（端口 8004）→ 验证 /_stcore/health
+- **PR**: https://github.com/DaTingLi/banksys_szai4/pull/4
 - **阻塞项**: 无（端口已固定 8004，见坑-005）
 
 ---
@@ -65,7 +66,7 @@
 - [x] 核心逻辑覆盖率：data_loader/visualizer/predictor 均 100%（UI 页面按规范不计）
 - [x] 注册 pytest unit marker，消除测试告警
 - [x] 修复 Dockerfile：构建时训练模型 + 装 curl + 健康检查端点 /_stcore/health（坑-006）
-- [ ] 推分支 + 发 PR，CI 复检（含 docker build）
+- [x] 推分支 + 发 PR（#4），CI 复检全绿（含 docker build）
 - [ ] 人工审核 → 合并 → CD 部署 → 验证端口 8004 健康检查
 
 ---
